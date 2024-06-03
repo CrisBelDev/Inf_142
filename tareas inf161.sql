@@ -212,6 +212,169 @@ WHERE (m.semestre = 5 AND tmp.idparalelo LIKE 'A')
 AND tmp.sigla = m.sigla
 ORDER BY tmp.apellido
 
+/* 5ta clase fujnciones de agregacion*/
+/*
+count: permite contar el numero de tuplas 
+*/
+SELECT pais, count(*)
+from cliente
+GROUP BY pais
+HAVING COUNT(*) > 5
+ORDER BY COUNT(*)
+
+/*1. Desplegar la cantidad de inscritos por materia. Desplegar ordenado por semestre y sigla */
+SELECT m.semestre,m.sigla, m.descripcion, COUNT(*) as nroalu
+FROM inscrito i, materia m 
+WHERE i.sigla = m.sigla
+GROUP BY m.sigla , m.descripcion, m.semestre
+ORDER BY m.sigla;
+
+
+/*2. Desplegar la cantidad de horas dictadas por docente. Horas dictas se entiende como la sumatoria de todas las horas por materia que dicta un docente. Desplegar ordenado por apellido paterno*/
+SELECT xd.paterno, xd.materno, xd.nombre, SUM(p.HORAS) AS horasdictadas
+FROM Docente xd, Paralelo p
+WHERE xd.IDDOC = p.IDDOC
+GROUP BY xd.paterno, xd.materno, xd.nombre
+HAVING SUM(p.HORAS) > 0
+ORDER BY xd.paterno;
+
+/*3. */
+
+SELECT xd.paterno, xd.materno, xd.nombre, SUM(p.HORAS) AS horasdictadas
+FROM docente xd, paralelo p
+WHERE xd.IDDOC = p.IDDOC
+GROUP BY xd.paterno, xd.materno, xd.nombre
+HAVING SUM(p.HORAS)>0
+ORDER BY xd.paterno
+
+
+
+
+SELECT xd.paterno, xd.materno, xd.nombre, SUM(p.HORAS) AS horasdictadas
+FROM Docente xd, Paralelo p
+WHERE xd.IDDOC = p.IDDOC
+GROUP BY xd.paterno, xd.materno, xd.nombre
+HAVING SUM(p.HORAS) > 0
+ORDER BY xd.paterno;
+
+
+/*6ta clase:  */
+/*1. Desplegar la cantidad de créditos por estudiante, de sus materias inscritas. Desplegar ordenado alfabéticamente por apellido.
+
+
+,COUNT(*) as nrocreditos
+*/
+SELECT e.apellido,e.nombre,SUM(m.credito) as nrocreditos
+FROM estudiante e, inscrito i, materia m
+WHERE e.idestu = i.idestu AND i.sigla = m.sigla 
+GROUP BY e.apellido,e.nombre
+ORDER BY e.apellido
+
+/*2. Desplegar el estudiante o estudiantes de INF111 del paralelo ‘B’ que obtuvieron la máxima nota final. Nota final es la suma de sus tres notas (Nota1 + Nota2 + Nota3).*/
+SELECT e.apellido,e.nombre ,((i.nota1+i.nota2+i.nota3)) as notafin
+FROM estudiante e, inscrito i, (SELECT MAX(tmp.notafinal) as notamax
+FROM (SELECT e.idestu , (i.nota1+i.nota2+i.nota3) as notafinal
+FROM estudiante e, inscrito i
+WHERE e.idestu = i.idestu AND i.sigla LIKE 'INF111'and i.idparalelo like 'B' ) tmp) tmp2
+
+WHERE e.idestu = i.idestu AND i.sigla LIKE 'INF111' and i.idparalelo like 'B' and ((i.nota1+i.nota2+i.nota3)) = tmp2.notamax  
+
+/*3. Desplegar las materias que son dictadas por docentes que dictan exactamente TRES materias. Ordenar por sigla.*/
+
+
+SELECT DISTINCT m.sigla, m.descripcion
+FROM materia m, paralelo p, 
+    (SELECT p.iddoc
+     FROM paralelo p
+     GROUP BY p.iddoc
+     HAVING COUNT( p.sigla) = 3) d
+WHERE m.sigla = p.sigla
+AND p.iddoc = d.iddoc
+ORDER BY m.sigla
+
+
+
+
+/*7ma clase:  */
+/* uso de sentencias in , not in */
+
+/*1. Desplegar los docentes que no dictan materias y no son coordinadores.*/
+/* paterno,materno,nombre*/
+SELECT d.paterno,d.materno,d.nombre
+FROM docente d
+WHERE d.iddoc NOT IN (SELECT xd.iddoc
+                    FROM docente xd, paralelo xp
+                    WHERE xd.iddoc = xp.iddoc)
+AND d.iddoc NOT IN  (SELECT xd.iddoc
+                    FROM docente xd, materia xm
+                    WHERE xd.iddoc = xm.iddoc_cordi)
+ORDER BY d.paterno
+
+
+
+/*2. Desplegar las materias que no pasan clases en aulas de tipo 'TEORICA'
+
+sigla,descripcion
+*/
+
+SELECT m.sigla, m.descripcion
+FROM materia m
+WHERE m.sigla NOT IN (SELECT xm.sigla
+                    FROM materia xm , paralelo xp , aula xa
+                    WHERE xm.sigla = xp.sigla AND xp.idaula = xa.idaula
+                    AND xa.tipo LIKE 'TEORICA')
+ORDER BY m.sigla
+
+/*3. Desplegar docentes que solo dictan materias del primer al tercer semestre y NO dictan materias del 4to para arriba.*/
+
+
+SELECT paterno,materno,nombre
+FROM docente
+WHERE iddoc IN (SELECT xd.iddoc 
+                FROM docente xd , paralelo xp , materia xm
+                where xd.iddoc = xp.iddoc AND xp.sigla = xm.sigla 
+                AND (xm.semestre >=1 AND  xm.semestre <=3))
+ORDER BY paterno
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
